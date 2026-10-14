@@ -1,0 +1,38 @@
+row_id,ProductName_clean,Summary_clean,Rate,human_label,cluster,correct,error
+100289,Mayne Flying Remote Control RC Induction Type 2-in-1 Indoor Outdoor Helicopter? ? (Multicolor),Too small,3,0,0,False,false_positive
+24528,"CMerchants Multi Organiser BLue-4 Book Shelf Metal Open Book Shelf (Finish Color - BLUE, DIY(Do-It-Yourself))",worth for money,5,0,0,False,false_positive
+24168,"CMerchants Multi Organiser BLue-4 Book Shelf Metal Open Book Shelf (Finish Color - BLUE, DIY(Do-It-Yourself))",Very nice quality,5,1,1,False,false_negative
+114446,"cello Pack of 18 Opalware Cello Dazzle Lush Fiesta Opalware Dinner Set, 18 Pieces Dinner Set (White, Microwave Safe)","Not bad, good",3,1,3,False,false_negative
+113584,"cello Pack of 18 Opalware Cello Dazzle Lush Fiesta Opalware Dinner Set, 18 Pieces Dinner Set (White, Microwave Safe)",Value for,5,1,1,False,false_negative
+74816,TW0TG7304 Analog Watch - For Men,Ok thanks,3,1,3,False,false_negative
+115835,"cello Pack of 18 Opalware Cello Dazzle Lush Fiesta Opalware Dinner Set, 18 Pieces Dinner Set (White, Microwave Safe)",Ratting 10/10...tnq Flipkart...,5,1,1,False,false_negative
+27263,"Flipkart SmartBuy CFXB18 Electric Rice Cooker? ? (1.8 L, White, Blue)",It a very bad prodect,1,1,3,False,false_negative
+79144,Men Solid Single Breasted Casual Blazer? ? (Blue),So cute,5,1,1,False,false_negative
+58464,"MANTAVYA Green Juicer New Model Hand Juicer Grinder 0 W Juicer (1 Jar, Green)",Very very very poor product .....,1,1,3,False,false_negative
+9759,Hindware Ripple 90 Auto Clean Wall Mounted Chimney? ? (Black 1350 CMH),Exlent.. Terrific purchase,5,1,1,False,false_negative
+27983,"Prestige Atlas Delight Electric Rice Cooker? ? (1.8 L, Blue)",This product is bed,2,1,3,False,false_negative
+39676,"NIVIA Storm Football - Size: 5 (Pack of 1, Multicolor)",Buy this very good,5,1,1,False,false_negative
+63997,"MILTON Thermosteel Flip Lid 500 ml Flask (Pack of 1, Silver, Steel)",Nice!!,5,1,1,False,false_negative
+11067,"UPC Upgraded Hands Free Squeeze Microfiber Flat Spin Mop 360 Flexible Head - Green Mop Set, Bucket",Beautiful product . Loved it,5,1,1,False,false_negative
+49867,tHemiStO Beginners 8 in 1 Soldering iron Kit 25 W Simple (Flat Tip),It is very good product.,5,1,1,False,false_negative
+50857,"INKULTURE Cosmetic & Make-up Organizers (White, Plastic)",Suparb,5,1,1,False,false_negative
+71576,Men Regular Fit Black Cotton Blend Trousers,Just fatafat,3,1,3,False,false_negative
+121840,realme Smart Tv Stick Media Streaming Device? ? (Black),Best buy,5,1,1,False,false_negative
+51983,Copper String LED light 10 MTR 100 LED USB Operated Decorative Lights 100 LEDs 10 m Yellow Rice Lights (Pack of 1),go for it...,5,1,1,False,false_negative
+93296,"Woodbuzz Engineered Wood Study Table (Free Standing, Finish Color - Frosty White & Yellow, DIY(Do-It-Yourself))",Very nice Product. Thanks Flipkart,5,1,1,False,false_negative
+97420,Canon PG47 Ink Catridge,Quality is good very nice,5,1,1,False,false_negative
+71722,Men Regular Fit Black Cotton Blend Trousers,Very nice ????,4,1,1,False,false_negative
+71243,Men Regular Fit Black Cotton Blend Trousers,Thanks Flipkart ??? ??? ????,5,1,1,False,false_negative
+24024,"CMerchants Multi Organiser BLue-4 Book Shelf Metal Open Book Shelf (Finish Color - BLUE, DIY(Do-It-Yourself))",Really nice product,5,1,1,False,false_negative
+97155,HP 805 Tri-Color Ink Cartridge,Bee Happy,5,1,1,False,false_negative
+82579,Men Graphic Print Round Neck Black T-Shirt,Best rating in 3.5 good progress in product,3,1,3,False,false_negative
+56211,LUMINOUS Power Sine 800 Pure Sine Wave Inverter,Good no issue,4,1,1,False,false_negative
+102936,Singer FM 1409 Electric Sewing Machine ( Built-in Stitches 9),Nice product thanks,5,1,1,False,false_negative
+25487,"CMerchants Multi Organiser BLue-4 Book Shelf Metal Open Book Shelf (Finish Color - BLUE, DIY(Do-It-Yourself))",Super mind blowing,5,1,1,False,false_negative
+49341,"Kadio Analog 20 cm X 20 cm Wall Clock (Beige, With Glass, Standard)",Nice wark,5,1,1,False,false_negative
+48486,"Kadio Analog 20 cm X 20 cm Wall Clock (Beige, With Glass, Standard)",nice quality and verry nic prodct,5,1,1,False,false_negative
+64436,"MILTON Thermosteel Flip Lid 500 ml Flask (Pack of 1, Silver, Steel)",Worthy product,5,1,1,False,false_negative
+64108,"MILTON Thermosteel Flip Lid 500 ml Flask (Pack of 1, Silver, Steel)",Customer satisfied,5,1,1,False,false_negative
+24785,"CMerchants Multi Organiser BLue-4 Book Shelf Metal Open Book Shelf (Finish Color - BLUE, DIY(Do-It-Yourself))",Good product No need to doubt about the product,5,1,1,False,false_negative
+80569,Pack of 3 Solid Men Multicolor Bermuda Shorts,Bad poor quality,1,1,3,False,false_negative
+120973,"PHILIPS MMS8085B/94 Convertible 80 W Bluetooth Home Theatre (Black, 2.1 Channel)",Good ??,4,1,1,False,false_negative
