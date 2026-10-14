@@ -1,0 +1,593 @@
+<title>Review Analytics Walkthrough</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+/* Layout: fixed stage rail on the left, scrolling stage panel on the right;
+   stacks to a horizontal stepper above the panel at phone width. */
+:root {
+  --bg:        #f4f5f7;
+  --surface:   #ffffff;
+  --surface-2: #eceef2;
+  --ink:       #1b1f26;
+  --ink-soft:  #596273;
+  --rule:      #d9dde4;
+  --accent:    #b4651a;
+  --accent-sf: #fdf1e4;
+  --pos:       #2f7a52;
+  --neg:       #b03a3a;
+  --neu:       #a07a1e;
+
+  --display: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+  --body:    'Source Sans 3', 'Segoe UI', system-ui, sans-serif;
+  --mono:    'IBM Plex Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:        #14171c;
+    --surface:   #1c2026;
+    --surface-2: #252a32;
+    --ink:       #e7e9ed;
+    --ink-soft:  #9aa3b2;
+    --rule:      #333944;
+    --accent:    #e0a062;
+    --accent-sf: #2b2118;
+    --pos:       #6cc292;
+    --neg:       #e38282;
+    --neu:       #d6b65c;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg:        #14171c;
+  --surface:   #1c2026;
+  --surface-2: #252a32;
+  --ink:       #e7e9ed;
+  --ink-soft:  #9aa3b2;
+  --rule:      #333944;
+  --accent:    #e0a062;
+  --accent-sf: #2b2118;
+  --pos:       #6cc292;
+  --neg:       #e38282;
+  --neu:       #d6b65c;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 16px;
+  line-height: 1.55;
+  margin: 0;
+}
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; }
+
+.wrap {
+  display: grid;
+  grid-template-columns: 268px minmax(0, 1fr);
+  gap: 28px;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding-inline: 16px;
+  padding-block: 28px 44px;
+  align-items: start;
+}
+
+/* ---- stage rail ---- */
+.rail { position: sticky; top: env(safe-area-inset-top, 0px); }
+.brand { margin-bottom: 18px; }
+.brand .course {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .09em;
+  text-transform: uppercase; color: var(--accent);
+}
+.brand h1 { font-size: 20px; line-height: 1.25; margin-top: 4px; }
+.brand .sub { font-size: 13px; color: var(--ink-soft); margin-top: 4px; }
+
+.steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.steps button {
+  width: 100%; display: flex; gap: 10px; align-items: baseline;
+  background: none; border: 0; border-left: 2px solid var(--rule);
+  padding: 7px 10px; text-align: left; cursor: pointer;
+  color: var(--ink-soft); font-family: var(--body); font-size: 13.5px;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.steps button:hover { background: var(--surface-2); color: var(--ink); }
+.steps button .n {
+  font-family: var(--mono); font-size: 11px; min-width: 1.4em;
+  font-variant-numeric: tabular-nums;
+}
+.steps button[aria-current="true"] {
+  border-left-color: var(--accent); color: var(--ink);
+  background: var(--accent-sf); font-weight: 600;
+}
+.steps button.done .n { color: var(--accent); }
+.steps :focus-visible, .nav :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ---- stage panel ---- */
+.panel {
+  background: var(--surface); border: 1px solid var(--rule);
+  border-radius: 10px; padding: 26px 28px 30px; min-width: 0;
+}
+.eyebrow {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .09em;
+  text-transform: uppercase; color: var(--accent); margin-bottom: 7px;
+}
+.panel h2 { font-size: 27px; line-height: 1.2; }
+.lede { font-size: 17px; color: var(--ink-soft); margin: 10px 0 0; max-width: 62ch; }
+
+.block { margin-top: 24px; }
+.block > h3 {
+  font-size: 12px; letter-spacing: .07em; text-transform: uppercase;
+  color: var(--ink-soft); margin-bottom: 9px;
+  padding-bottom: 6px; border-bottom: 1px solid var(--rule);
+}
+.block p { margin: 0 0 10px; max-width: 68ch; }
+.block p:last-child { margin-bottom: 0; }
+code, .mono { font-family: var(--mono); font-size: .88em; }
+code { background: var(--surface-2); padding: 1px 5px; border-radius: 3px; }
+
+/* result tiles */
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); gap: 10px; }
+.tile { background: var(--surface-2); border-radius: 7px; padding: 12px 13px; }
+.tile .v {
+  font-family: var(--display); font-size: 24px; font-weight: 600;
+  font-variant-numeric: tabular-nums; line-height: 1.1;
+}
+.tile .k { font-size: 12px; color: var(--ink-soft); margin-top: 3px; }
+.tile.hl { background: var(--accent-sf); box-shadow: inset 2px 0 0 var(--accent); }
+.tile.hl .v { color: var(--accent); }
+
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+.scroll { overflow-x: auto; }
+th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--rule); }
+th { font-size: 11.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-soft); font-weight: 600; }
+td.num { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+tr.best td { background: var(--accent-sf); }
+tr.best td:first-child { font-weight: 600; }
+
+figure { margin: 0; }
+figure img { width: 100%; max-width: 100%; display: block; border: 1px solid var(--rule); border-radius: 7px; background: #fff; }
+figcaption { font-size: 13px; color: var(--ink-soft); margin-top: 7px; }
+
+.note {
+  border-left: 2px solid var(--accent); background: var(--accent-sf);
+  padding: 11px 14px; border-radius: 0 6px 6px 0; font-size: 14.5px;
+}
+.note strong { font-family: var(--display); }
+
+.pill {
+  display: inline-block; font-family: var(--mono); font-size: 11px;
+  padding: 2px 7px; border-radius: 99px; border: 1px solid var(--rule);
+  color: var(--ink-soft);
+}
+.pos { color: var(--pos); } .neg { color: var(--neg); } .neu { color: var(--neu); }
+
+/* ---- nav ---- */
+.nav {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  margin-top: 26px; padding-top: 18px; border-top: 1px solid var(--rule);
+}
+.nav button {
+  font-family: var(--body); font-size: 15px; font-weight: 600;
+  padding: 9px 20px; border-radius: 7px; cursor: pointer;
+  border: 1px solid var(--rule); background: var(--surface-2); color: var(--ink);
+}
+.nav button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+:root[data-theme="dark"] .nav button.primary,
+:root:not([data-theme="light"]) .nav button.primary { color: #1b1206; }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .nav button.primary { color: #fff; } }
+.nav button[disabled] { opacity: .4; cursor: not-allowed; }
+.counter { margin-left: auto; font-family: var(--mono); font-size: 12.5px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+
+@media (max-width: 820px) {
+  .wrap { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+  .rail { position: static; }
+  .steps { flex-direction: row; overflow-x: auto; gap: 0; padding-bottom: 4px; }
+  .steps button {
+    border-left: 0; border-bottom: 2px solid var(--rule);
+    white-space: nowrap; width: auto; padding: 6px 11px;
+  }
+  .steps button[aria-current="true"] { border-bottom-color: var(--accent); }
+  .steps button .label { display: none; }
+  .steps button .n { font-size: 13px; }
+  .panel { padding: 20px 17px 24px; }
+  .panel h2 { font-size: 22px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <aside class="rail">
+    <div class="brand">
+      <div class="course">CBS3009 &#183; Course Project</div>
+      <h1>E-Commerce Review Analytics</h1>
+      <div class="sub">132,410 Flipkart reviews &#183; sentiment, topics and review quality</div>
+    </div>
+    <nav><ul class="steps" id="steps"></ul></nav>
+  </aside>
+
+  <main class="panel" id="panel" tabindex="-1"></main>
+</div>
+
+<script>
+const STAGES = [
+  {
+    nav: 'Problem',
+    eyebrow: 'Stage 0 &#8212; Problem definition',
+    title: 'What question is this project answering?',
+    lede: 'Star ratings compress every review into one number. That hides why customers are unhappy, and treats a one-word "Good" as equal to a detailed account of a fault.',
+    blocks: [
+      { h: 'The problem', p: [
+        'This dataset holds 189,874 reviews across 812 products. No one can read them, so decisions get made from the average rating alone &#8212; which says nothing about <em>what went wrong</em>, and counts every review as equally informative.',
+        'The project answers three questions: can sentiment be predicted from the text, what themes do customers actually write about, and how much of the corpus carries no information at all.'
+      ]},
+      { h: 'Analytical questions', table: {
+        head: ['', 'Question', 'Answered by'],
+        rows: [
+          ['AQ1', 'How accurately can sentiment be predicted, and which algorithm is best?', 'Component 1'],
+          ['AQ2', 'What themes dominate, and do any carry disproportionate negativity?', 'Component 2'],
+          ['AQ3', 'What share of reviews are low-information, and can that be identified reliably?', 'Component 3']
+        ]}},
+      { h: 'Pipeline', figure: ['figures/pipeline_architecture.png',
+        'The implemented pipeline. The three analytical components run in parallel off a shared feature stage; the external validation of Component 3 is the element that goes beyond a standard three-component project. Those labels are LLM-generated, not human annotation.'] }
+    ]
+  },
+  {
+    nav: 'Data',
+    eyebrow: 'Stage 1 &#8212; Data collection',
+    title: 'A public dataset, after live scraping was abandoned',
+    lede: 'Scraping Flipkart directly was attempted and dropped for a documented reason. The fallback is an approved public dataset, which the course guidelines permit.',
+    blocks: [
+      { h: 'What happens', p: [
+        'The raw CSV is loaded with <code>encoding=\'latin1\'</code> &#8212; it contains non-UTF8 bytes from the original scrape that appear as mojibake in currency symbols and emoji. Reading it as UTF-8 fails outright.'
+      ]},
+      { h: 'Why not scrape live', p: [
+        'Amazon.in blocked automated access with CAPTCHA. Flipkart\'s internal API gateway returned <code>HTTP 403</code> with an <code>x-bifrost-error</code> header to any non-browser client, even carrying a valid session cookie. Working around that needed a headful browser automation stack, which was judged too fragile for the deadline.',
+        'Using a public dataset removes the platform-terms risk entirely. Only review text, ratings, product names and prices are used &#8212; no personal identifiers.'
+      ]},
+      { h: 'Result', tiles: [
+        ['189,874', 'raw reviews'], ['812', 'unique products'], ['5', 'columns per review'], ['78%', 'rated 4 or 5 stars']
+      ]},
+      { h: 'The five columns', table: {
+        head: ['Column', 'Type', 'What it holds', 'Used for'],
+        rows: [
+          ['<code>ProductName</code>', 'text', 'Full product title, e.g. "Candes 12 L Room/Personal Air Cooler"', 'Grouping reviews by product'],
+          ['<code>Price</code>', 'text', 'Price as displayed, with currency symbol and commas', 'Cleaned to an integer; not used in the models'],
+          ['<code>Rate</code>', 'integer', 'The customer\'s star rating &#8212; a whole number from 1 (worst) to 5 (best)', 'Source of the sentiment label, and a clustering feature'],
+          ['<code>Review</code>', 'text', 'The short headline the customer gave, e.g. "Super!"', 'Not used &#8212; too short to carry signal'],
+          ['<code>Summary</code>', 'text', 'The body of the review. <strong>This is the main text field.</strong>', 'Sentiment classification, topic discovery, length and repetition features']
+        ]}},
+      { h: 'How ratings become sentiment labels', p: [
+        'There is no human-annotated sentiment in this dataset, so the label is derived from the star rating: <strong>4 or 5 stars &#8594; positive</strong>, <strong>3 stars &#8594; neutral</strong>, <strong>1 or 2 stars &#8594; negative</strong>. This is the standard mapping in review-analytics work.',
+        'It carries a consequence that runs through the whole project: the classifiers are learning to predict the <em>star rating</em> from the text, not human-judged sentiment. Where the two disagree &#8212; a review reading "very good" that carries 3 stars &#8212; the model is marked wrong for agreeing with the words. That is a limitation of the labels, not of the model.'
+      ]}
+    ]
+  },
+  {
+    nav: 'Preprocess',
+    eyebrow: 'Stage 2 &#8212; Preprocessing',
+    title: 'Seven steps, each removing an identified defect',
+    lede: 'Every step exists because something specific was wrong with the data. Row counts are recorded after each so the effect is auditable.',
+    blocks: [
+      { h: 'What happens', table: {
+        head: ['Step', 'Defect addressed', 'Rows dropped'],
+        rows: [
+          ['1', 'Non-numeric ratings &#8212; product text leaked into the column via unescaped commas', '5'],
+          ['2', 'Missing review text &#8212; nothing to analyse', '13'],
+          ['3', 'Mojibake from the encoding corruption', '&#8212;'],
+          ['4', 'Price stored as text (<code class="mono">??3,999</code> &#8594; <code class="mono">3999</code>)', '&#8212;'],
+          ['5', 'Record text repetition <em>before</em> removing it', '&#8212;'],
+          ['6', 'Exact duplicate reviews &#8212; scraping artefacts', '57,446'],
+          ['7', 'Derive sentiment label and word count', '&#8212;']
+        ]}},
+      { h: 'Why step 5 comes before step 6', p: [
+        'This ordering was a real bug. Step 6 deletes duplicate reviews. The original code counted repetition <em>after</em> that deletion, so the count came back as 1 for almost every row &#8212; the feature was constant and contributed nothing, silently reducing Component 3 to two working features.',
+        'Counting first, and across all products rather than within one, is what makes the feature carry signal at all.'
+      ]},
+      { h: 'Result', tiles: [
+        ['132,410', 'cleaned rows'], ['56.8%', 'share text with another review'], ['15,818', 'copies of the word "Good"'], ['5', 'median words per review']
+      ]},
+      { h: '', note: 'The most common review text in the dataset is the single word <strong>&#8220;Good&#8221;</strong>, appearing 15,818 times. That single fact drives the whole of Component 3.' }
+    ]
+  },
+  {
+    nav: 'Features',
+    eyebrow: 'Stage 3 &#8212; Feature representation',
+    title: 'Three representations, because three tasks need different things',
+    lede: 'Using one representation everywhere would be wrong. Each component needs a different view of the same reviews.',
+    blocks: [
+      { h: 'What happens', table: {
+        head: ['Component', 'Representation', 'Why this one'],
+        rows: [
+          ['Classification', 'TF-IDF, 1&#8211;2 grams, 5,000 features', 'Down-weights words appearing in every review; bigrams keep "not good" intact'],
+          ['Topic discovery', 'Raw counts, 2,000 features', 'LDA is a generative model over counts &#8212; TF-IDF weights break its assumption'],
+          ['Review quality', 'Behavioural, 4 features', 'Length, punctuation, repetition and rating &#8212; not the words themselves']
+        ]}},
+      { h: 'Why not stem or lemmatise', p: [
+        'Both were considered and skipped. The median review is 5 words long, and TF-IDF with bigrams over a 5,000-term vocabulary already collapses most inflection that matters at this scale. Stemming would mainly have merged distinct product terms.'
+      ]}
+    ]
+  },
+  {
+    nav: 'Sentiment',
+    eyebrow: 'Stage 4 &#8212; Component 1',
+    title: 'Sentiment classification: four models disagree',
+    lede: 'Four classifiers on an identical stratified 80/20 split. Two different models win, depending on which metric you believe.',
+    blocks: [
+      { h: 'Result', table: {
+        head: ['Model', 'Accuracy', 'Weighted F1', 'Macro F1', 'Neutral F1'],
+        rows: [
+          ['Naive Bayes', '0.8474', '<strong>0.8222</strong>', '0.6100', '0.1758'],
+          ['Decision Tree', '0.7249', '0.7470', '0.5732', '0.2571'],
+          ['Logistic Regression', '0.7745', '0.8002', '<strong>0.6394</strong>', '<strong>0.3137</strong>'],
+          ['Complement NB', '0.8142', '0.8163', '0.6374', '0.2969']
+        ], best: [0, 2], nums: [1, 2, 3, 4] }},
+      { h: 'Why they disagree', p: [
+        'Weighted F1 is dominated by the positive class, which is 73% of the test set. A model can score well on it while effectively ignoring the neutral class &#8212; and Naive Bayes does exactly that, predicting "neutral" just <strong>535 times out of 24,406</strong>.',
+        'Macro F1 weights all three classes equally and exposes this. Logistic Regression predicts neutral 4,227 times and recovers 979 of the 2,014 true neutrals, nearly doubling neutral F1.',
+        'So the model choice has to name its objective. Best overall performance on the real class distribution &#8594; Naive Bayes. Balanced performance across all three classes &#8594; Logistic Regression.'
+      ]},
+      { h: 'Error analysis', p: [
+        'The two models fail in <em>opposite directions</em>. 73% of Naive Bayes errors are something &#8594; positive. 45% of Logistic Regression errors are positive &#8594; neutral.',
+        'Error rate is flat across review length (14.2% for 1&#8211;2 words, 15.6% for 20+), so short text is not the problem. The problem is the labels: a review reading <em>&#8220;very good&#8221;</em> carries a 3-star rating, and <em>&#8220;it\'s good one&#8221;</em> likewise. The text is positive; the derived label says neutral.'
+      ]},
+      { h: '', figure: ['figures/confusion_matrices.png',
+        'All four confusion matrices. The near-empty neutral column for Naive Bayes (top left) is the whole argument in one picture.'] }
+    ]
+  },
+  {
+    nav: 'Topics',
+    eyebrow: 'Stage 5 &#8212; Component 2',
+    title: 'Topic discovery: service complaints, not product faults',
+    lede: 'LDA over 84,070 reviews of at least four words. Six topics, labelled by the terms that actually distinguish them.',
+    blocks: [
+      { h: 'What happens', p: [
+        'LDA infers topics from word co-occurrence, with no labels and no pre-defined categories. Each review is then assigned its most probable topic.',
+        'Labelling topics by their <em>most probable</em> words fails here: "product", "good" and "quality" sit near the top of all six. Ranking instead by how much more probable a term is in one topic than across topics on average gives labels the evidence actually supports.'
+      ]},
+      { h: 'Result', table: {
+        head: ['Topic', 'Distinctive terms', 'Reviews', 'Negative'],
+        rows: [
+          ['0', 'like, super, poor, machine, bought, properly, colour', '7,008', '27.8%'],
+          ['1', 'use, tv, small, easy, perfect, day, works', '13,920', '21.0%'],
+          ['2', 'worth, using, range, amazing, performance, overall', '8,904', '17.5%'],
+          ['3', '<strong>bad, don, installation, worst, waste, expected</strong>', '15,175', '<strong>46.4%</strong>'],
+          ['4', 'nice, happy, value, thanks, love, superb', '27,290', '4.1%'],
+          ['5', 'price, best, service, satisfied, low, bass', '11,773', '11.5%']
+        ], best: [3], nums: [2, 3] }},
+      { h: 'The finding', p: [
+        'Topic 3 carries more than ten times the negativity of topic 4, and its distinctive vocabulary is <em>service and expectation</em> language &#8212; installation, waste, worst, expected &#8212; rather than product-feature language.',
+        'That points at delivery and installation as the driver of dissatisfaction, which is actionable in a way an overall star average is not.'
+      ]},
+      { h: 'Is it an artefact?', p: [
+        'Assigning each review to one topic discards the soft mixture LDA actually infers. Re-weighting sentiment by the full distribution instead gives the <strong>same</strong> most-negative topic (3), at 35.9%. The finding survives the simplification &#8212; a check that could have failed.'
+      ]},
+      { h: '', figure: ['figures/topic_distribution.png',
+        'Topic sizes and negativity. The largest topic is generic gratitude; the most negative is service-related.'] },
+      { h: '', figure: ['figures/topic_wordclouds.png',
+        'Word clouds of the six topics, sized by term probability within each topic. These show the most probable terms &#8212; useful for a quick read, but note that the generic words appearing across several clouds are exactly why the distinctive-term ranking above was needed.'] },
+      { h: 'Why six topics', p: [
+        'A UMass coherence sweep over k = 3&#8230;10 favours <strong>k=4</strong> (&#8722;2.81) over k=6 (&#8722;3.11). k=6 was kept anyway: at k=4 two of the four topics are near-duplicate generic-praise themes, so the better score buys no insight, and UMass coherence is known to favour fewer, broader topics because it rewards co-occurrence among high-frequency terms.',
+        'The sweep disagreeing with the choice is reported rather than hidden.'
+      ]},
+      { h: '', figure: ['figures/topic_coherence.png',
+        'Coherence by k. Green marks the best score; orange marks the value retained, against the metric\'s preference.'] }
+    ]
+  },
+  {
+    nav: 'Quality',
+    eyebrow: 'Stage 6 &#8212; Component 3',
+    title: 'Finding reviews that say nothing',
+    lede: 'K-Means on behavioural features &#8212; how long a review is, how often its exact text repeats across the catalogue, and what it rated.',
+    blocks: [
+      { h: 'What happens', p: [
+        'Four features, standardised: word count, exclamation ratio, log repetition frequency, and star rating. Repetition is log-transformed because raw frequency spans 1 to 15,818 with a median of 1 &#8212; on that scale it would dominate the distance metric and nothing else would matter.',
+        'K is chosen by silhouette among <em>non-degenerate</em> solutions: any partition where a cluster holds under 1% of the data is rejected. K=5 scored marginally higher (0.5364) by isolating 191 rows, which describes too few reviews to interpret.'
+      ]},
+      { h: 'Result', table: {
+        head: ['Cluster', 'Reviews', 'Share', 'Words', 'Avg repeats', 'Rating', 'Reading'],
+        rows: [
+          ['0', '19,620', '<strong>14.8%</strong>', '1.8', '<strong>2,349&#215;</strong>', '4.50', 'Low-information'],
+          ['1', '74,460', '56.2%', '7.9', '2.9&#215;', '4.75', 'Ordinary positive'],
+          ['2', '8,196', '6.2%', '56.0', '1.2&#215;', '4.08', 'Long and detailed'],
+          ['3', '30,134', '22.8%', '8.4', '18.5&#215;', '1.73', 'Genuine complaints']
+        ], best: [0], nums: [1, 2, 3, 4, 5] }},
+      { h: 'What this is not', note: 'This is <strong>not fake-review detection</strong>. The dataset has no ground truth for authenticity, so no such claim could be evaluated. The finding is that 14.8% of reviews are one-word text repeated thousands of times across the catalogue &#8212; low information content, which is a different and defensible claim.' },
+      { h: '', figure: ['figures/clustering_analysis.png',
+        'K selection, cluster sizes, structure, and sentiment composition. Note that the sentiment panel is partly circular &#8212; rating is itself a clustering feature.'] }
+    ]
+  },
+  {
+    nav: 'Validation',
+    eyebrow: 'Stage 7 &#8212; Validation',
+    title: 'Does an independent reader agree with the algorithm?',
+    lede: 'Silhouette says the clusters are well separated. It says nothing about whether the flagged cluster contains what we claim. Testing that needs a judgement made by reading the text.',
+    blocks: [
+      { h: 'Protocol', p: [
+        '200 reviews &#8212; 100 flagged, 100 not &#8212; exported shuffled with the cluster IDs hidden in a separate key file, then labelled against a criterion (<em>does the text convey any product-specific or experience-specific detail?</em>) that was written down <strong>before</strong> labelling began.',
+        'A refinement made during labelling &#8212; that naming the product category counts as informative &#8212; is disclosed rather than absorbed silently.'
+      ]},
+      { h: 'Who produced the labels', note: '<strong>The labels were generated by an LLM (Claude) applying the written criterion, not by a human annotator.</strong> This is external validation, not human validation. It is still informative, because K-Means never reads the words &#8212; it uses length, repetition and rating &#8212; while the labeller read only the text, so the two signals are different. But an LLM\'s sense of &#8220;low-information&#8221; plausibly tracks brevity, which is also most of what the clustering keys on, and that shared bias would inflate agreement. Read 0.980 with that in mind.'
+      },
+      { h: 'Result', tiles: [
+        ['0.980', 'Precision', true], ['0.737', 'Recall'], ['0.841', 'F1'], ['0', 'labels checked by a human']
+      ]},
+      { h: 'Agreement by cluster', table: {
+        head: ['Cluster', 'In sample', 'Labelled low-information'],
+        rows: [
+          ['0 &#8212; flagged', '100', '<strong>98.0%</strong>'],
+          ['1 &#8212; ordinary positive', '69', '39.1%'],
+          ['2 &#8212; long and detailed', '3', '<strong>0.0%</strong>'],
+          ['3 &#8212; complaints', '28', '28.6%']
+        ], best: [0], nums: [1, 2] }},
+      { h: 'Reading the errors', p: [
+        'Only <strong>2 false positives</strong> out of 100 flagged &#8212; the flag almost never fires on an informative review.',
+        'Of the 35 misses, 27 sit in the ordinary-positive cluster at a mean 3.3 words, just outside the flagged cluster\'s 1.8-word centre. So the recall gap is a <em>boundary effect</em>, not the sentiment bias one might expect. The secondary effect is real though: 8 generic complaints ("Bad poor quality", "This product is bed") get pulled into the complaints cluster because rating is a clustering feature.',
+        'The honest claim: <strong>highly precise but conservative</strong> &#8212; a high-confidence subset of low-information reviews, not all of them.'
+      ]},
+      { h: '', figure: ['figures/validation_results.png',
+        'Flag versus the LLM reference labels, and the four metrics. The monotonic gradient across clusters, with 0% in the detailed-review cluster, is independent evidence the clustering found something real.'] }
+    ]
+  },
+  {
+    nav: 'Insights',
+    eyebrow: 'Stage 8 &#8212; Integrated insights',
+    title: 'What the three components say together',
+    lede: 'Each component answers a different question. Combined, they say what customers feel, why, and how much of the corpus is worth reading.',
+    blocks: [
+      { h: 'Findings', tiles: [
+        ['46.4%', 'negative in the service topic', true],
+        ['14.8%', 'of reviews carry no information', true],
+        ['0.8222', 'best weighted F1 (Naive Bayes)'],
+        ['0.980', 'precision of the quality flag']
+      ]},
+      { h: 'The argument', p: [
+        '<strong>Dissatisfaction is operational, not product-level.</strong> The topic whose distinctive vocabulary is installation and delivery carries ten times the negativity of the general-satisfaction topic. That routes to a logistics team, not a product team.',
+        '<strong>A seventh of the review corpus is noise.</strong> One-word text, repeated thousands of times across unrelated products, inflating rating averages while contributing nothing a reader could act on.',
+        '<strong>The quality filter looks reliable, with a caveat on how that was checked.</strong> At 0.980 precision against LLM-generated reference labels, filtering the flagged cluster before computing sentiment or topic summaries removes noise without discarding substance.'
+      ]},
+      { h: 'Why this is more than sentiment analysis', note: 'The contribution is not a classifier. It is an integrated pipeline in which an unsupervised quality filter is <strong>validated against independent external labels</strong> (LLM-generated, applying a pre-registered criterion) and then used to qualify the other two components\' findings &#8212; plus three methodological defects found, diagnosed and documented during development.' }
+    ]
+  },
+  {
+    nav: 'Limits',
+    eyebrow: 'Stage 9 &#8212; Limitations',
+    title: 'What this project does not establish',
+    lede: 'Stated plainly, because a result whose limits are known is worth more than one presented as stronger than it is.',
+    blocks: [
+      { h: 'Limitations', table: {
+        head: ['#', 'Limitation', 'Consequence'],
+        rows: [
+          ['1', 'Labels derived from star ratings, not annotation', 'Classifiers predict ratings from text, not human-judged sentiment'],
+          ['2', 'Neutral class weak across all four models (best F1 0.314)', 'Three-star reviews genuinely mix positive and negative language'],
+          ['3', 'Topic labels are analyst interpretations', 'The model outputs word distributions; the names are ours'],
+          ['4', 'Cluster&#8211;sentiment relationship is partly circular', 'Rating is both a clustering input and the label source'],
+          ['5', 'No ground truth for authenticity', 'Low-information &#8800; fake; no fraud claim is supported'],
+          ['6', 'Validation labels are LLM-generated, not human', 'This is external validation, not human validation; no human has checked any label'],
+          ['6a', 'Single labeller, and it was an LLM', 'Inter-rater agreement (Cohen\'s &#954;) unmeasured'],
+          ['7', 'Validation sample balanced 100/100 by design', 'Precision describes the sample, not the full corpus'],
+          ['8', 'Case-sensitive deduplication, case-insensitive counting', 'An internal inconsistency, documented rather than hidden']
+        ]}},
+      { h: 'A correction made during development', p: [
+        'Component 3 originally counted duplicate text <em>after</em> deduplication had already removed it, making the feature constant. The clustering was effectively running on two features, not four.',
+        'Fixing it changed the headline result substantially &#8212; the flagged group grew from <strong>4.8% to 14.8%</strong> of the corpus &#8212; and the old output is kept in <code>archive/</code> for comparison. Reporting the correction is more useful than presenting only the corrected number.'
+      ]},
+      { h: 'Future work', p: [
+        'Aspect-based sentiment to attach sentiment to specific product attributes. Transformer embeddings for the neutral class, where bag-of-words features plainly struggle. A second labeller and Cohen\'s &#954; to show the low-information criterion is reproducible across people. Certified-buyer metadata, if obtainable, as the nearest available proxy for authenticity.'
+      ]}
+    ]
+  },
+  {
+    nav: 'Reproduce',
+    eyebrow: 'Stage 10 &#8212; Reproducibility',
+    title: 'Everything here regenerates from the code',
+    lede: 'Eight pipeline scripts and an executed notebook, all with a fixed random seed, verified to produce identical numbers.',
+    blocks: [
+      { h: 'How to run it', p: [
+        'Scripts <code>01</code> through <code>08</code> run in order from the project root. Each resolves its paths from its own file location, so the working directory does not matter &#8212; verified by running the full pipeline from an unrelated directory and getting identical output.'
+      ]},
+      { h: 'Verification', tiles: [
+        ['20/20', 'notebook cells executed'], ['0', 'errors'], ['55', 'automated consistency checks', true], ['42', 'random seed, everywhere']
+      ]},
+      { h: 'What was checked', p: [
+        'The notebook reruns the entire analysis from the raw CSV and independently reproduces every number: 132,410 cleaned rows, K=4, precision 0.980, topic 3 at 46.4% negative, Naive Bayes at 0.8222 weighted F1.',
+        '<code>docs/results_log.md</code> holds the verbatim terminal output of a full run and is regenerated by script rather than by hand, so the report cannot quote a stale figure.',
+        '<code>verify_submission.py</code> runs 55 checks: every expected file exists, every declared dependency imports, the notebook has no unexecuted cells and no errors, the numbers quoted in this walkthrough and in the notebook agree with the output tables, the results log is not older than the scripts it reports on, and every figure resolves. It exits non-zero on any failure.'
+      ]},
+      { h: 'Deliverables', table: {
+        head: ['#', 'Deliverable', 'Status'],
+        rows: [
+          ['2', 'Source code / Jupyter notebook', '8 scripts + 3 tools + executed notebook'],
+          ['3', 'Documented dataset source', 'README, with Kaggle link and encoding notes'],
+          ['4', 'Results, evaluation tables and visualizations', '7 figures, 8 result tables'],
+          ['6', 'Working demonstration', 'This walkthrough']
+        ]}}
+    ]
+  }
+];
+
+const stepsEl = document.getElementById('steps');
+const panelEl = document.getElementById('panel');
+let current = 0;
+
+function esc(s) { return s; }
+
+function renderBlock(b) {
+  let out = '<div class="block">';
+  if (b.h) out += `<h3>${b.h}</h3>`;
+  if (b.p) out += b.p.map(t => `<p>${t}</p>`).join('');
+  if (b.note) out += `<div class="note">${b.note}</div>`;
+  if (b.tiles) {
+    out += '<div class="tiles">' + b.tiles.map(t =>
+      `<div class="tile${t[2] ? ' hl' : ''}"><div class="v">${t[0]}</div><div class="k">${t[1]}</div></div>`
+    ).join('') + '</div>';
+  }
+  if (b.table) {
+    const t = b.table;
+    const nums = new Set(t.nums || []);
+    const best = new Set(t.best || []);
+    out += '<div class="scroll"><table><thead><tr>' +
+      t.head.map(h => `<th>${h}</th>`).join('') + '</tr></thead><tbody>' +
+      t.rows.map((r, i) => `<tr class="${best.has(i) ? 'best' : ''}">` +
+        r.map((c, j) => `<td class="${nums.has(j) ? 'num' : ''}">${c}</td>`).join('') +
+        '</tr>').join('') + '</tbody></table></div>';
+  }
+  if (b.figure) {
+    out += `<figure><img src="${b.figure[0]}" alt="${b.figure[1].replace(/<[^>]*>/g, '')}" loading="lazy">` +
+           `<figcaption>${b.figure[1]}</figcaption></figure>`;
+  }
+  return out + '</div>';
+}
+
+function render() {
+  const s = STAGES[current];
+  panelEl.innerHTML =
+    `<div class="eyebrow">${s.eyebrow}</div>` +
+    `<h2>${s.title}</h2>` +
+    `<p class="lede">${s.lede}</p>` +
+    s.blocks.map(renderBlock).join('') +
+    `<div class="nav">
+       <button id="prev" ${current === 0 ? 'disabled' : ''}>&larr; Back</button>
+       <button id="next" class="primary" ${current === STAGES.length - 1 ? 'disabled' : ''}>Next stage &rarr;</button>
+       <span class="counter">${String(current + 1).padStart(2, '0')} / ${String(STAGES.length).padStart(2, '0')}</span>
+     </div>`;
+
+  document.getElementById('prev').onclick = () => go(current - 1);
+  document.getElementById('next').onclick = () => go(current + 1);
+
+  [...stepsEl.querySelectorAll('button')].forEach((b, i) => {
+    b.setAttribute('aria-current', i === current ? 'true' : 'false');
+    b.classList.toggle('done', i < current);
+  });
+}
+
+function go(i) {
+  if (i < 0 || i >= STAGES.length) return;
+  current = i;
+  render();
+  panelEl.focus({ preventScroll: true });
+  window.scrollTo({ top: 0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  try { localStorage.setItem('cbs3009-stage', String(i)); } catch (e) {}
+}
+
+stepsEl.innerHTML = STAGES.map((s, i) =>
+  `<li><button type="button"><span class="n">${String(i).padStart(2, '0')}</span><span class="label">${s.nav}</span></button></li>`
+).join('');
+[...stepsEl.querySelectorAll('button')].forEach((b, i) => { b.onclick = () => go(i); });
+
+document.addEventListener('keydown', e => {
+  if (e.target.matches('input, textarea')) return;
+  if (e.key === 'ArrowRight') { e.preventDefault(); go(current + 1); }
+  if (e.key === 'ArrowLeft')  { e.preventDefault(); go(current - 1); }
+});
+
+try {
+  const saved = parseInt(localStorage.getItem('cbs3009-stage'), 10);
+  if (!isNaN(saved) && saved >= 0 && saved < STAGES.length) current = saved;
+} catch (e) {}
+
+render();
+</script>
