@@ -1,0 +1,30 @@
+# CBS3009 Course Project -- E-Commerce Review Analytics
+# Verified working on Python 3.13.6 (Windows)
+#
+#   python -m pip install -r requirements.txt
+#
+# Note: the package is imported as `sklearn` but installed as `scikit-learn`.
+
+# --- Analysis pipeline (scripts/01 - 08) ---
+pandas==3.0.1
+numpy==2.2.6
+scikit-learn==1.8.0
+matplotlib==3.10.5
+seaborn==0.13.2
+wordcloud==1.9.6
+joblib==1.5.2
+
+# --- Notebook build and execution (scripts/build_notebook.py, run_notebook.py) ---
+# Required, not optional: run_notebook.py imports nbformat and nbclient directly.
+# ipykernel supplies the python3 kernel the notebook executes against.
+nbformat==5.10.4
+nbclient==0.10.4
+ipykernel==7.2.0
+
+# Optional -- only to open the notebook interactively in a browser.
+# The pipeline and run_notebook.py do not need it.
+# jupyter
+
+# NOT used. gensim is the usual source of topic-coherence measures, but it does
+# not install cleanly on Python 3.13, so UMass coherence is implemented directly
+# in scripts/07_topic_coherence.py with no extra dependency.
