@@ -1,0 +1,13 @@
+model,actual,predicted,count,pct_of_errors
+Naive Bayes,neutral,positive,1380,37.05
+Naive Bayes,negative,positive,1339,35.95
+Naive Bayes,neutral,negative,410,11.01
+Naive Bayes,positive,negative,285,7.65
+Naive Bayes,positive,neutral,203,5.45
+Naive Bayes,negative,neutral,108,2.9
+Logistic Regression,positive,neutral,2492,45.28
+Logistic Regression,positive,negative,838,15.23
+Logistic Regression,negative,neutral,756,13.74
+Logistic Regression,neutral,positive,583,10.59
+Logistic Regression,neutral,negative,452,8.21
+Logistic Regression,negative,positive,383,6.96
